@@ -1,5 +1,4 @@
 # game engine using template from Chris Bradfield's "Making Games with Python & Pygame"
-# 
 #I can push from VScode.
 '''
 Main file responsible for game loop including input, update, and draw methods.
@@ -62,8 +61,8 @@ class Game:
         self.all_sprites = pg.sprite.Group()
         self.all_walls = pg.sprite.Group()
         self.all_mobs = pg.sprite.Group()
-        self.player = Player(self, 15, 15) # create player
-        self.mob = Mob(self, 4, 4) # create enemy
+        #self.player = Player(self, 15, 15) # create player
+        #self.mob = Mob(self, 4, 4) # create enemy
         self.wall = Wall(self, WIDTH/2/TILESIZE, HEIGHT/2/TILESIZE) #create wall
         for row, tiles in enumerate(self.map.data):
             for col, tile, in enumerate(tiles):
@@ -72,6 +71,8 @@ class Game:
                     Wall(self, col, row)
                 if tile == 'P':
                     self.player = Player(self,col, row)
+                if tile == 'C':
+                    Coin(self, col, row)
         self.run() #start game loop
 
     def run(self):
