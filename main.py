@@ -1,5 +1,6 @@
 # game engine using template from Chris Bradfield's "Making Games with Python & Pygame"
-#I can push from VScode.
+# I can push from vs code...
+# I can push more code from vs code to github
 '''
 Main file responsible for game loop including input, update, and draw methods.
 
@@ -36,54 +37,58 @@ vec = pg.math.Vector2
 # the game class that will be instantiated in order to run the game...
 class Game:
     def __init__(self):
-        pg.init() # start pygame
+        pg.init()
         # setting up pygame screen using tuple value for width height
         self.screen = pg.display.set_mode((WIDTH, HEIGHT))
-        pg.display.set_caption(TITLE) # set title
-        self.clock = pg.time.Clock() # control FPS
+        pg.display.set_caption(TITLE)
+
+        self.clock = pg.time.Clock()
         self.running = True
         self.playing = True
-        self.game_cooldown = Cooldown(5000) #timer object
+        self.game_cooldown = Cooldown(5000)
+        print('game instantiated...')
         
-        
-        # self.load_data()
     
     # a method is a function tied to a Class
 
     def load_data(self):
-        self.game_dir = path.dirname(__file__) #accesses the filespace we are currently in
+        self.game_dir = path.dirname(__file__)
+        self.img_dir = path.join(self.game_dir, 'images')
+        self.wall_img = pg.image.load(path.join(self.img_dir, 'wall_art.png')).convert_alpha()
         self.map = Map(path.join(self.game_dir, 'level1.txt'))
-        print("Data loaded successfully!")
-
+        print('data is loaded')
 
     def new(self):
         self.load_data()
         self.all_sprites = pg.sprite.Group()
         self.all_walls = pg.sprite.Group()
         self.all_mobs = pg.sprite.Group()
-        #self.player = Player(self, 15, 15) # create player
-        #self.mob = Mob(self, 4, 4) # create enemy
-        self.wall = Wall(self, WIDTH/2/TILESIZE, HEIGHT/2/TILESIZE) #create wall
+        self.all_projectiles = pg.sprite.Group()
+        # self.player = Player(self, 15, 15)
+        # self.mob = Mob(self, 4, 4) 
+        # self.wall = Wall(self, WIDTH/2/TILESIZE, HEIGHT/2/TILESIZE)
         for row, tiles in enumerate(self.map.data):
             for col, tile, in enumerate(tiles):
                 if tile == '1':
-                    #call class constructor without assigning variable...when
+                    # call class constructor without assigning variable...when
                     Wall(self, col, row)
                 if tile == 'P':
-                    self.player = Player(self,col, row)
+                    self.player = Player(self, col, row)
+                if tile == 'M':
+                    Mob(self, col, row)
                 if tile == 'C':
                     Coin(self, col, row)
-        self.run() #start game loop
+        self.run()
 
     def run(self):
         while self.running:
             self.dt = self.clock.tick(FPS) / 1000
-            self.events() # handle input
-            self.update() # update game
-            self.draw() # draw screen
+            self.events()
+            self.update()
+            self.draw()
 
     def events(self):
-        for event in pg.event.get(): # check events
+        for event in pg.event.get():
             if event.type == pg.QUIT:
                 if self.playing:
                     self.playing = False
@@ -105,6 +110,7 @@ class Game:
 
     def update(self):
         self.all_sprites.update()
+        # print(len(self.all_projectiles))
 
     
     def draw(self):
