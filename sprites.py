@@ -257,3 +257,143 @@ class Player(Sprite):
 
         # sync visual rect with hitbox
         self.rect.center = self.hit_rect.center
+
+class Wall(Sprite):
+
+    def __init__(self, game, x, y):
+        # add wall to sprite groups
+        self.groups = game.all_sprites, game.all_walls
+        Sprite.__init__(self, self.groups)
+
+        # draw wall as a colored tile
+        self.image = game.wall_img
+        self.image = pg.transform.scale(self.image, (TILESIZE, TILESIZE))
+        self.rect = self.image.get_rect()
+        self.rect.x = x * TILESIZE
+        self.rect.y = y * TILESIZE
+
+
+class Coin(Sprite):
+
+    def __init__(self, game, x, y):
+        # add coin to sprite groups
+        self.groups = game.all_sprites, game.all_coins
+        Sprite.__init__(self, self.groups)
+
+        # draw coin as a small yellow circle
+        self.image = pg.Surface((TILESIZE, TILESIZE), pg.SRCALPHA)
+        pg.draw.circle(self.image, YELLOW, (TILESIZE // 2, TILESIZE // 2), TILESIZE // 4)
+        self.rect = self.image.get_rect()
+        self.rect.x = x * TILESIZE
+        self.rect.y = y * TILESIZE
+
+
+class Guard(Sprite):
+
+    def __init__(self, game, x, y):
+        # add guard to sprite groups
+        self.groups = game.all_sprites, game.all_mobs
+        Sprite.__init__(self, self.groups)
+
+        self.game = game
+
+        # draw guard as a red square
+        self.image = pg.Surface((TILESIZE, TILESIZE))
+        self.image.fill(GUARD_COLOR)
+        self.rect = self.image.get_rect()
+
+        # guard position as a vector
+        self.pos = vec(x, y) * TILESIZE
+        self.vel = vec(0, 0)
+
+        # hitbox for collisions
+        self.hit_rect = GUARD_HIT_RECT.copy()
+
+        # patrol between start point and a point to the right
+        self.patrol_start = vec(x, y) * TILESIZE
+        self.patrol_end = vec(x + 3, y) * TILESIZE
+        # which patrol point the guard is moving toward
+        self.patrol_target = self.patrol_end
+
+        # set up guard state machine
+        self.state_machine = StateMachine()
+        self.states = [
+            GuardPatrolState(self),
+            GuardAlertState(self)
+        ]
+        self.state_machine.start_machine(self.states)
+
+    # move the guard toward its current patrol target
+    def move_toward_target(self):
+        direction = self.patrol_target - self.pos
+
+        # if close enough to target, switch to the other patrol point
+        if direction.length() < 4:
+            if self.patrol_target == self.patrol_end:
+                self.patrol_target = self.patrol_start
+            else:
+                self.patrol_target = self.patrol_end
+
+        # move toward target at guard speed
+        if direction.length() > 0:
+            self.vel = direction.normalize() * GUARD_SPEED
+
+    # returns True if the player is within vision range
+    def can_see_player(self):
+        player_pos = self.game.player.pos
+        distance = (player_pos - self.pos).length()
+        return distance < GUARD_VISION_RANGE
+
+    def update(self):
+        # update state machine each frame
+        self.state_machine.update()
+
+        # move guard
+        self.pos += self.vel * self.game.dt
+        self.rect.center = self.pos
+        self.hit_rect.center = self.pos
+
+        # stop guard velocity after applying it
+        self.vel = vec(0, 0)
+
+
+class Projectile(Sprite):
+
+    def __init__(self, game, x, y):
+        # add projectile to sprite groups
+        self.groups = game.all_sprites, game.all_projectiles
+        Sprite.__init__(self, self.groups)
+
+        # draw projectile as a small white square
+        self.image = pg.Surface((8, 8))
+        self.image.fill(WHITE)
+        self.rect = self.image.get_rect()
+
+        self.pos = vec(x, y)
+        self.vel = vec(PLAYER_SPEED * 2, 0)
+
+    def update(self):
+        self.pos += self.vel * self.game.dt
+        self.rect.center = self.pos
+
+        # remove projectile if it goes off screen
+        if self.rect.right < 0 or self.rect.left > WIDTH:
+            self.kill()
+
+
+class Mob(Sprite):
+
+    def __init__(self, game, x, y):
+        # add mob to sprite groups
+        self.groups = game.all_sprites, game.all_mobs
+        Sprite.__init__(self, self.groups)
+
+        # draw mob as a blue square
+        self.image = pg.Surface((TILESIZE, TILESIZE))
+        self.image.fill(BLUE)
+        self.rect = self.image.get_rect()
+        self.rect.x = x * TILESIZE
+        self.rect.y = y * TILESIZE
+
+    def update(self):
+        pass
