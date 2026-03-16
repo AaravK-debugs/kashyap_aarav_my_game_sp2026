@@ -43,4 +43,53 @@ class PlayerMoveState(State):
         # print('updating player move state...')
         self.player.image.fill(GREEN)
         keys = pg.key.get_pressed()
+
+
+# guard patrols back and forth between two points
+class GuardPatrolState(State):
+    def __init__(self, guard):
+        self.guard = guard
+        self.name = "patrol"
+
+    def get_state_name(self):
+        return "patrol"
+
+    def enter(self):
+        # set guard color to normal when patrolling
+        self.guard.image.fill(GUARD_COLOR)
+
+    def exit(self):
+        pass
+
+    def update(self):
+        # move guard toward its current patrol target
+        self.guard.move_toward_target()
+
+        # check if guard can see the player
+        if self.guard.can_see_player():
+            self.guard.state_machine.transition("alert")
+
+
+# guard has spotted the player — triggers game over
+class GuardAlertState(State):
+    def __init__(self, guard):
+        self.guard = guard
+        self.name = "alert"
+
+    def get_state_name(self):
+        return "alert"
+
+    def enter(self):
+        # flash white to signal detection
+        self.guard.image.fill(WHITE)
+        print('guard spotted the player!')
+        # tell the game the player was caught
+        self.guard.game.player_caught = True
+
+    def exit(self):
+        pass
+
+    def update(self):
+        # stay frozen in alert — game is over
+        pass
   

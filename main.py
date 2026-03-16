@@ -64,6 +64,11 @@ class Game:
         self.all_walls = pg.sprite.Group()
         self.all_mobs = pg.sprite.Group()
         self.all_projectiles = pg.sprite.Group()
+        self.all_coins = pg.sprite.Group()
+
+        # flags for game state
+        self.player_caught = False
+        self.coins_collected = 0
         # self.player = Player(self, 15, 15)
         # self.mob = Mob(self, 4, 4) 
         # self.wall = Wall(self, WIDTH/2/TILESIZE, HEIGHT/2/TILESIZE)
@@ -76,6 +81,9 @@ class Game:
                     self.player = Player(self, col, row)
                 if tile == 'M':
                     Mob(self, col, row)
+                if tile == 'G':
+                    # spawn a guard at this map position
+                    Guard(self, col, row)
                 if tile == 'C':
                     Coin(self, col, row)
         self.run()
@@ -110,17 +118,39 @@ class Game:
 
     def update(self):
         self.all_sprites.update()
-        # print(len(self.all_projectiles))
+
+        # check if player touched a coin — remove it and increase counter
+        coin_hits = pg.sprite.spritecollide(self.player, self.all_coins, True)
+        for coin in coin_hits:
+            self.coins_collected += 1
+
+        # stop the game loop if a guard caught the player
+        if self.player_caught:
+            self.draw()
+            pg.time.wait(2000)
+            self.running = False
 
     
     def draw(self):
         self.screen.fill(BLUE)
-        self.draw_text("Hello World", 24, WHITE, WIDTH/2, TILESIZE)
-        self.draw_text(str(self.dt), 24, WHITE, WIDTH/2, HEIGHT/4)
-        # self.draw_text(str(self.game_cooldown.time), 24, WHITE, WIDTH/2, HEIGHT/.5)
-        self.draw_text(str(self.game_cooldown.ready()), 24, WHITE, WIDTH/2, HEIGHT/3)
-        self.draw_text(str(self.player.pos), 24, WHITE, WIDTH/2, HEIGHT-TILESIZE*3)
         self.all_sprites.draw(self.screen)
+
+        # draw each guard's vision cone on top of sprites
+        for guard in self.all_mobs:
+            if isinstance(guard, Guard):
+                guard.draw_fov(self.screen)
+
+        # show coin counter in top left
+        self.draw_text("Coins: " + str(self.coins_collected), 24, WHITE, WIDTH / 2, TILESIZE)
+
+        # show game over if caught
+        if self.player_caught:
+            self.draw_text("GAME OVER - You were spotted!", 36, RED, WIDTH / 2, HEIGHT / 2)
+
+        # show win message if all coins collected
+        if len(self.all_coins) == 0 and self.coins_collected > 0:
+            self.draw_text("YOU WIN! All coins collected!", 36, YELLOW, WIDTH / 2, HEIGHT / 2)
+
         pg.display.flip()
 
     def draw_text(self, text, size, color, x, y):
@@ -139,8 +169,3 @@ while g.running:
 
 
 pg.quit()
-
-
-    
-
-    

@@ -258,6 +258,7 @@ class Player(Sprite):
         # sync visual rect with hitbox
         self.rect.center = self.hit_rect.center
 
+
 class Wall(Sprite):
 
     def __init__(self, game, x, y):
@@ -315,6 +316,9 @@ class Guard(Sprite):
         # which patrol point the guard is moving toward
         self.patrol_target = self.patrol_end
 
+        # the direction the guard is currently facing (starts facing right)
+        self.facing = vec(1, 0)
+
         # set up guard state machine
         self.state_machine = StateMachine()
         self.states = [
@@ -337,16 +341,82 @@ class Guard(Sprite):
         # move toward target at guard speed
         if direction.length() > 0:
             self.vel = direction.normalize() * GUARD_SPEED
+            # update facing here so it always matches the drawn cone
+            self.facing = direction.normalize()
 
-    # returns True if the player is within vision range
+    # calculates the three cone points — shared by detection AND drawing
+    # this guarantees what you see is exactly what detects you
+    def get_cone_points(self):
+        half_angle = GUARD_FOV_ANGLE / 2
+        left_edge = self.facing.rotate(-half_angle).normalize() * GUARD_VISION_RANGE
+        right_edge = self.facing.rotate(half_angle).normalize() * GUARD_VISION_RANGE
+        center = vec(self.pos.x, self.pos.y)
+        tip_left = self.pos + left_edge
+        tip_right = self.pos + right_edge
+        return center, tip_left, tip_right
+
+    # checks if point P is inside triangle A B C using cross product signs
+    def point_in_triangle(self, p, a, b, c):
+        def sign(p1, p2, p3):
+            return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
+        d1 = sign(p, a, b)
+        d2 = sign(p, b, c)
+        d3 = sign(p, c, a)
+        has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
+        has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
+        return not (has_neg and has_pos)
+
+    # steps along a ray checking if any wall blocks the view
+    def wall_between(self, start, end):
+        direction = end - start
+        distance = direction.length()
+        if distance == 0:
+            return False
+        step = direction.normalize()
+        for i in range(0, int(distance), 8):
+            point = start + step * i
+            for wall in self.game.all_walls:
+                if wall.rect.collidepoint(point.x, point.y):
+                    return True
+        return False
+
+    # detection uses the exact same triangle as draw_fov — no mismatch possible
     def can_see_player(self):
+        if self.facing.length() == 0:
+            return False
+        center, tip_left, tip_right = self.get_cone_points()
         player_pos = self.game.player.pos
-        distance = (player_pos - self.pos).length()
-        return distance < GUARD_VISION_RANGE
+        # player must be inside the visible triangle
+        if not self.point_in_triangle(player_pos, center, tip_left, tip_right):
+            return False
+        # and no wall blocking the line of sight
+        return not self.wall_between(self.pos, player_pos)
+
+    # draws the cone using the exact same points used in detection
+    def draw_fov(self, screen):
+        if self.facing.length() == 0:
+            return
+        center, tip_left, tip_right = self.get_cone_points()
+        # yellow normally, red when player is caught
+        if self.game.player_caught:
+            cone_color = (255, 0, 0, 80)
+        else:
+            cone_color = (255, 255, 0, 60)
+        cone_surface = pg.Surface((WIDTH, HEIGHT), pg.SRCALPHA)
+        pg.draw.polygon(cone_surface, cone_color, [
+            (int(center.x), int(center.y)),
+            (int(tip_left.x), int(tip_left.y)),
+            (int(tip_right.x), int(tip_right.y))
+        ])
+        screen.blit(cone_surface, (0, 0))
 
     def update(self):
         # update state machine each frame
         self.state_machine.update()
+
+        # track which direction the guard is facing based on movement
+        if self.vel.length() > 0:
+            self.facing = self.vel.normalize()
 
         # move guard
         self.pos += self.vel * self.game.dt

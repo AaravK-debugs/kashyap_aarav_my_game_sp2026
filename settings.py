@@ -20,3 +20,12 @@ GREEN = (0,255,0)
 YELLOW = (255,255,0)
 BLACK = (0,0,0)
 
+# guard values
+GUARD_SPEED = 80
+GUARD_VISION_RANGE = 180   # how far the guard can see (pixels)
+GUARD_FOV_ANGLE = 90       # width of the vision cone in degrees
+GUARD_COLOR = RED
+GUARD_HIT_RECT = pg.Rect(0, 0, TILESIZE - 5, TILESIZE - 5)
+
+# coin values
+COIN_COLOR = YELLOW
