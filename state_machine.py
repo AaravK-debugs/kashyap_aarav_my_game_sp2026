@@ -68,5 +68,3 @@ class StateMachine():
             if is_log_enabled:
                 print("attempt to transition to " + new_state_name + " ignored since it is the current state...")
     
-
-

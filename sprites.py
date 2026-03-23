@@ -310,14 +310,18 @@ class Guard(Sprite):
         # hitbox for collisions
         self.hit_rect = GUARD_HIT_RECT.copy()
 
-        # patrol between start point and a point to the right
-        self.patrol_start = vec(x, y) * TILESIZE
-        self.patrol_end = vec(x + 3, y) * TILESIZE
+        # patrol 2 tiles left and right from start position
+        self.patrol_start = vec(x - 2, y) * TILESIZE
+        self.patrol_end = vec(x + 2, y) * TILESIZE
         # which patrol point the guard is moving toward
         self.patrol_target = self.patrol_end
 
         # the direction the guard is currently facing (starts facing right)
         self.facing = vec(1, 0)
+
+        # position the rect immediately so guard is visible on first frame
+        self.rect.center = self.pos
+        self.hit_rect.center = self.pos
 
         # set up guard state machine
         self.state_machine = StateMachine()
