@@ -49,3 +49,25 @@ class Cooldown:
         if current_time - self.start_time >= self.time:
             return True
         return False
+
+class Camera:
+    def __init__(self, width, height):
+        # the offset applied to every sprite when drawing
+        self.offset = pg.math.Vector2(0, 0)
+        self.width = width
+        self.height = height
+
+    def apply(self, sprite):
+        # returns a shifted rect so the sprite draws at the correct screen position
+        return sprite.rect.move(self.offset.x, self.offset.y)
+
+    def update(self, target):
+        # center the camera on the target (player)
+        self.offset.x = -target.rect.centerx + WIDTH // 2
+        self.offset.y = -target.rect.centery + HEIGHT // 2
+
+        # clamp so camera never scrolls past map edges
+        self.offset.x = min(0, self.offset.x)
+        self.offset.y = min(0, self.offset.y)
+        self.offset.x = max(-(self.width - WIDTH), self.offset.x)
+        self.offset.y = max(-(self.height - HEIGHT), self.offset.y)

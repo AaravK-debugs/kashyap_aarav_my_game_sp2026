@@ -254,18 +254,21 @@ class Guard(Sprite):
             return False
         return not self.wall_between(self.pos, player_pos)
 
-    def draw_fov(self, screen):
+    # offset is the camera offset so the cone lines up with the scrolling world
+    def draw_fov(self, screen, offset):
         if self.facing.length() == 0:
             return
         center, tip_left, tip_right = self.get_cone_points()
-        # red cone when alert, soft yellow otherwise
+        # shift all three cone points by the camera offset
+        cx = int(center.x + offset.x)
+        cy = int(center.y + offset.y)
+        lx = int(tip_left.x + offset.x)
+        ly = int(tip_left.y + offset.y)
+        rx = int(tip_right.x + offset.x)
+        ry = int(tip_right.y + offset.y)
         cone_color = (220, 60, 60, 80) if self.game.player_caught else (255, 230, 80, 45)
         cone_surf = pg.Surface((WIDTH, HEIGHT), pg.SRCALPHA)
-        pg.draw.polygon(cone_surf, cone_color, [
-            (int(center.x),    int(center.y)),
-            (int(tip_left.x),  int(tip_left.y)),
-            (int(tip_right.x), int(tip_right.y))
-        ])
+        pg.draw.polygon(cone_surf, cone_color, [(cx, cy), (lx, ly), (rx, ry)])
         screen.blit(cone_surf, (0, 0))
 
     def update(self):

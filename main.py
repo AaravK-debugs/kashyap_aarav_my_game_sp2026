@@ -58,6 +58,10 @@ class Game:
 
         # store total coins so win condition works correctly
         self.total_coins = len(self.all_coins)
+
+        # create camera sized to the full map
+        self.camera = Camera(self.map.width, self.map.height)
+
         self.run()
 
     def run(self):
@@ -77,6 +81,9 @@ class Game:
     def update(self):
         self.all_sprites.update()
 
+        # move camera to follow the player
+        self.camera.update(self.player)
+
         # collect coins on touch
         coin_hits = pg.sprite.spritecollide(self.player, self.all_coins, True)
         for coin in coin_hits:
@@ -93,14 +100,17 @@ class Game:
     def draw(self):
         # fill background with dark color
         self.screen.fill(DARK_BG)
-        self.all_sprites.draw(self.screen)
 
-        # draw each guard's vision cone on top
+        # draw every sprite shifted by the camera offset
+        for sprite in self.all_sprites:
+            self.screen.blit(sprite.image, self.camera.apply(sprite))
+
+        # draw each guard's vision cone shifted by camera
         for mob in self.all_mobs:
             if isinstance(mob, Guard):
-                mob.draw_fov(self.screen)
+                mob.draw_fov(self.screen, self.camera.offset)
 
-        # coin counter top center
+        # coin counter top center (fixed to screen)
         self.draw_text(f"Coins: {self.coins_collected} / {self.total_coins}", 22, TEXT_COLOR, WIDTH // 2, 10)
 
         pg.display.flip()
