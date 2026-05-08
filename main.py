@@ -20,6 +20,9 @@ class Game:
         self.clock = pg.time.Clock()
         self.running = True
         self.current_level = 1
+        # lives persist across levels — only reset on full game over or completing all levels
+        self.starting_lives = 3
+        self.lives = self.starting_lives
         print('game instantiated...')
 
     def load_data(self):
@@ -113,6 +116,9 @@ class Game:
         # coin counter top center (fixed to screen)
         self.draw_text(f"Coins: {self.coins_collected} / {self.total_coins}", 22, TEXT_COLOR, WIDTH // 2, 10)
 
+        # lives counter top left
+        self.draw_text(f"Lives: {self.lives}", 22, DANGER_COLOR, 60, 10)
+
         pg.display.flip()
 
     # --- screen helpers ---
@@ -144,18 +150,49 @@ class Game:
                         return 'b'
 
     def show_game_over_screen(self):
-        # draw the current frame then overlay the game over screen
+        # lose a life when caught
+        self.lives -= 1
+
+        # if no lives remain, go to the real game over
+        if self.lives <= 0:
+            self.show_no_lives_screen()
+            return
+
+        # otherwise: show "spotted" screen with lives remaining and let player retry
         self.draw()
         self.draw_overlay()
-        self.draw_text("SPOTTED!", 64, DANGER_COLOR, WIDTH // 2, HEIGHT // 2 - 80)
-        self.draw_text("The guard saw you...", 28, TEXT_COLOR, WIDTH // 2, HEIGHT // 2)
+        self.draw_text("SPOTTED!", 64, DANGER_COLOR, WIDTH // 2, HEIGHT // 2 - 100)
+        self.draw_text("The guard saw you...", 28, TEXT_COLOR, WIDTH // 2, HEIGHT // 2 - 40)
+        self.draw_text(f"Lives remaining: {self.lives}", 28, DANGER_COLOR, WIDTH // 2, HEIGHT // 2)
         self.draw_text("R  — Retry level", 26, ACCENT_COLOR, WIDTH // 2, HEIGHT // 2 + 60)
         self.draw_text("Q  — Quit", 26, TEXT_COLOR, WIDTH // 2, HEIGHT // 2 + 100)
         pg.display.flip()
 
         choice = self.wait_for_choice(pg.K_r, pg.K_q)
         if choice == 'a':
-            # restart the current level
+            # restart the current level — lives carry over
+            self.running = True
+            self.player_caught = False
+            self.new()
+        else:
+            pg.quit()
+            sys.exit()
+
+    def show_no_lives_screen(self):
+        # all lives used — true game over, offer full restart from level 1
+        self.draw()
+        self.draw_overlay()
+        self.draw_text("GAME OVER", 64, DANGER_COLOR, WIDTH // 2, HEIGHT // 2 - 100)
+        self.draw_text("You're out of lives.", 28, TEXT_COLOR, WIDTH // 2, HEIGHT // 2 - 30)
+        self.draw_text("R  — Restart from Level 1", 26, ACCENT_COLOR, WIDTH // 2, HEIGHT // 2 + 40)
+        self.draw_text("Q  — Quit", 26, TEXT_COLOR, WIDTH // 2, HEIGHT // 2 + 80)
+        pg.display.flip()
+
+        choice = self.wait_for_choice(pg.K_r, pg.K_q)
+        if choice == 'a':
+            # full reset: lives back to 3, level back to 1
+            self.lives = self.starting_lives
+            self.current_level = 1
             self.running = True
             self.player_caught = False
             self.new()
@@ -185,6 +222,9 @@ class Game:
             self.draw_text("R  — Play again", 26, ACCENT_COLOR, WIDTH // 2, HEIGHT // 2 + 90)
             pg.display.flip()
             self.wait_for_choice(pg.K_r, pg.K_r)
+            # full restart — back to level 1 with full lives
+            self.current_level = 1
+            self.lives = self.starting_lives
 
         # restart into new (or same) level
         self.running = True
