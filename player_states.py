@@ -1,7 +1,12 @@
 from state_machine import *
 from settings import *
 
+
+# --- Player States ---
+
 class PlayerIdleState(State):
+    """Active when the player is not pressing any movement keys."""
+
     def __init__(self, player):
         self.player = player
         self.name = "idle"
@@ -10,21 +15,21 @@ class PlayerIdleState(State):
         return "idle"
 
     def enter(self):
+        # reset tint to white when standing still
         self.player.image.fill(WHITE)
-        print('enter player idle state')
 
     def exit(self):
-        print('exit player idle state')
+        pass
 
     def update(self):
-        # print('updating player idle state...')
+        # keep image white each frame in case another state changed it
         self.player.image.fill(WHITE)
         keys = pg.key.get_pressed()
-        #if keys[pg.K_k]:
-        #    print('transitioning to attack state...')
-        #    self.player.state_machine.transition("attack")
-            
+
+
 class PlayerMoveState(State):
+    """Active while the player is moving."""
+
     def __init__(self, player):
         self.player = player
         self.name = "move"
@@ -34,19 +39,21 @@ class PlayerMoveState(State):
 
     def enter(self):
         self.player.image.fill(WHITE)
-        print('enter player move state')
 
     def exit(self):
-        print('exit player move state')
+        pass
 
     def update(self):
-        # print('updating player move state...')
+        # tint green while moving so the state is visually obvious during dev
         self.player.image.fill(GREEN)
         keys = pg.key.get_pressed()
 
 
-# guard patrols back and forth between two points
+# --- Guard States ---
+
 class GuardPatrolState(State):
+    """Guard walks back and forth between its two patrol points."""
+
     def __init__(self, guard):
         self.guard = guard
         self.name = "patrol"
@@ -55,23 +62,24 @@ class GuardPatrolState(State):
         return "patrol"
 
     def enter(self):
-        # set guard color to normal when patrolling
+        # restore normal guard color when returning to patrol
         self.guard.image.fill(GUARD_COLOR)
 
     def exit(self):
         pass
 
     def update(self):
-        # move guard toward its current patrol target
+        # step toward the current patrol waypoint
         self.guard.move_toward_target()
 
-        # check if guard can see the player
+        # switch to alert state if the player enters the vision cone
         if self.guard.can_see_player():
             self.guard.state_machine.transition("alert")
 
 
-# guard has spotted the player — triggers game over
 class GuardAlertState(State):
+    """Guard has spotted the player — triggers game over."""
+
     def __init__(self, guard):
         self.guard = guard
         self.name = "alert"
@@ -80,16 +88,14 @@ class GuardAlertState(State):
         return "alert"
 
     def enter(self):
-        # flash white to signal detection
+        # flash white as a visual cue that detection happened
         self.guard.image.fill(WHITE)
-        print('guard spotted the player!')
-        # tell the game the player was caught
+        # set the flag that main.py checks to trigger the game over screen
         self.guard.game.player_caught = True
 
     def exit(self):
         pass
 
     def update(self):
-        # stay frozen in alert — game is over
+        # guard freezes in place once alert — game over is already queued
         pass
-  

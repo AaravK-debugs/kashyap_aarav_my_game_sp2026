@@ -1,14 +1,15 @@
 import pygame as pg
 
-WIDTH = 800
+# screen dimensions and basic window settings
+WIDTH  = 800
 HEIGHT = 600
-TITLE = "Shadow Heist"
-FPS = 60
-TILESIZE = 32
+TITLE  = "Shadow Heist"
+FPS    = 60
+TILESIZE = 32  # each map tile is 32x32 pixels
 
-# player values
-PLAYER_SPEED = 280
-PLAYER_HIT_RECT = pg.Rect(0, 0, TILESIZE-5, TILESIZE-5)
+# player movement speed and collision rectangle
+PLAYER_SPEED   = 280
+PLAYER_HIT_RECT = pg.Rect(0, 0, TILESIZE - 5, TILESIZE - 5)
 
 # --- color palette (all colors chosen to mesh together) ---
 DARK_BG      = (18,  18,  30)   # very dark navy — background
@@ -21,7 +22,7 @@ TEXT_COLOR   = (220, 220, 240)  # soft white — general text
 ACCENT_COLOR = (100, 220, 180)  # teal — highlights/win text
 DANGER_COLOR = (220,  80,  80)  # red — game over text
 
-# keep these for legacy references in state files
+# legacy aliases kept so older state files don't break
 WHITE  = TEXT_COLOR
 RED    = DANGER_COLOR
 GREEN  = (80, 200, 120)
@@ -29,10 +30,10 @@ YELLOW = COIN_COLOR
 BLACK  = (0, 0, 0)
 BLUE   = DARK_BG
 
-# guard values
-GUARD_SPEED = 80
-GUARD_VISION_RANGE = 180
-GUARD_FOV_ANGLE = 90
-GUARD_HIT_RECT = pg.Rect(0, 0, TILESIZE - 5, TILESIZE - 5)
+# guard movement and vision settings
+GUARD_SPEED        = 80
+GUARD_VISION_RANGE = 180   # how far the guard can see in pixels
+GUARD_FOV_ANGLE    = 90    # width of the vision cone in degrees
+GUARD_HIT_RECT     = pg.Rect(0, 0, TILESIZE - 5, TILESIZE - 5)
 
 ORANGE = (255, 140, 0)

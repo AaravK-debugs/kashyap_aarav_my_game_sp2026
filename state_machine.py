@@ -1,70 +1,71 @@
-
+# controls whether debug print statements are shown
 is_log_enabled: bool = False
 
-# comment below added by AI sends to dead link; this code was actually inspired by my transposition of a GODOT state machine implementation, which can be found here: https://www.youtube.com/watch?v=QM9yytr2YL4&t=391s
-# state machine implementation inspired by https://www.youtube.com/watch?v=HhLwqQYyHf8&t=1s&ab_channel=CodeMonkey
-class State():
+# inspired by a Godot state machine implementation:
+# https://www.youtube.com/watch?v=QM9yytr2YL4&t=391s
+
+
+class State:
+    """Base class for all states. Subclasses override enter, exit, and update."""
+
     def __init__(self):
         pass
+
     def enter(self):
+        # called once when the machine switches into this state
         pass
+
     def exit(self):
+        # called once when the machine switches away from this state
         pass
+
     def update(self):
+        # called every frame while this state is active
         pass
+
     def get_state_name(self):
+        # returns a unique string key used to look up this state during transitions
         return ""
 
-class StateMachine():
-    def __init__(self):
-        # set up state machine with empty states and a default state
-        self.current_state = State()
-        # dictionary of states for easy access during transitions
-        self.states = {}
-        print(self.states)
-    
-    # takes in a list of states to initialize the state machine with, and sets the first state in the list as the default state
-    def start_machine(self, init_states = [State]):
-        # add states to state machine's state dictionary for easy access during transitions
-        for state in init_states:
-            print(state.get_state_name())
-            self.states[state.get_state_name()] = state
-            print(self.states)
 
-        # set current state to first state in list of states passed into start_machine function
+class StateMachine:
+    def __init__(self):
+        self.current_state = State()  # placeholder until start_machine is called
+        self.states = {}              # name -> State lookup table
+
+    def start_machine(self, init_states=[State]):
+        # register every state in the dictionary by its name
+        for state in init_states:
+            self.states[state.get_state_name()] = state
+
+        # first state in the list becomes the starting state
         self.current_state = init_states[0]
+        self.current_state.enter()
 
         if is_log_enabled:
-            print('starting state machine...')
-
-        self.current_state.enter()
-        print("state machine started with state:", self.current_state.get_state_name())
-
+            print("state machine started with state:", self.current_state.get_state_name())
 
     def update(self):
-        if self.current_state == None:
+        # delegate the frame update to whichever state is currently active
+        if self.current_state is None:
             print('no current state...')
         else:
             self.current_state.update()
-        
+
     def transition(self, new_state_name):
-        new_state: State = self.states.get(new_state_name)
-        self.current_state_name = self.current_state.get_state_name()
-        if new_state == None:
+        # look up the target state by name
+        new_state = self.states.get(new_state_name)
+
+        if new_state is None:
             print("attempting to transition to non existent state")
         elif new_state != self.current_state:
+            # exit the old state, then enter the new one
             self.current_state.exit()
-            
-            if is_log_enabled:
-                print('exiting state...')
-            
             self.current_state = self.states[new_state.get_state_name()]
+            self.current_state.enter()
 
             if is_log_enabled:
-                print('entering new state...')
-
-            self.current_state.enter()
+                print(f"transitioned to {new_state_name}")
         else:
             if is_log_enabled:
-                print("attempt to transition to " + new_state_name + " ignored since it is the current state...")
-    
+                print(f"transition to {new_state_name} ignored — already active")
